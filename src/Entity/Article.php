@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Model\TimestampedInterface;
 use App\Repository\ArticleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -9,7 +10,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
-class Article
+class Article implements TimestampedInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -28,14 +29,17 @@ class Article
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $featuredText = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable:false)]
+    private ?\DateTimeInterface $createdAt = null ;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $updateAt = null;
+    private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'articles')]
-    private ?Category $category = null;
+    // #[ORM\ManyToMany(targetEntity: Category::class, mappedBy: 'articles')]
+    // private $categories;
+    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'articles')]
+    #[ORM\JoinTable(name: "category_article")]
+    private $categories;
 
     #[ORM\OneToMany(mappedBy: 'article', targetEntity: Comment::class, orphanRemoval: true)]
     private Collection $comments;
@@ -46,6 +50,7 @@ class Article
     public function __construct()
     {
         $this->comments = new ArrayCollection();
+        $this->categories = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -113,26 +118,29 @@ class Article
         return $this;
     }
 
-    public function getUpdateAt(): ?\DateTimeInterface
+    public function getUpdatedAt(): ?\DateTimeInterface
     {
-        return $this->updateAt;
+        return $this->updatedAt;
     }
 
-    public function setUpdateAt(\DateTimeInterface $updateAt): self
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
     {
-        $this->updateAt = $updateAt;
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }
 
-    public function getCategory(): ?Category
+     /**
+     * @return Collection<int, Category>
+     */
+    public function getCategories(): Collection
     {
-        return $this->category;
+        return $this->categories;
     }
 
-    public function setCategory(?Category $category): self
+    public function setCategories(?Category $categories): self
     {
-        $this->category = $category;
+        $this->categories = $categories;
 
         return $this;
     }
